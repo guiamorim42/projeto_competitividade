@@ -1,26 +1,29 @@
 import requests
 from bs4 import BeautifulSoup
 
-def get_amazon_price(url):
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"}
-    
-    page = requests.get(url, headers=headers)
-    
-    soup = BeautifulSoup(page.content, 'html.parser')
+def get_price_from_mercado_livre(url):
+    # Fazendo solicitação GET para a página do produto
+    response = requests.get(url)
 
-    
-    # Encontrar o elemento que contém o preço
-    price_element = soup.find('span', class_='a-offscreen') # Pode variar dependendo da estrutura da página
-
-    
-    if price_element is not None:
-        return price_element.text.strip()
+    # Verificando se a solicitação foi bem-sucedida
+    if response.status_code == 200:
+        # Parseando o HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # Encontrando a tag meta com itemprop="price"
+        price_meta_tag = soup.find('meta', itemprop='price')
+        
+        # Verificando se a tag foi encontrada
+        if price_meta_tag:
+            # Obtendo o conteúdo do atributo content que contém o preço
+            price = price_meta_tag.get('content')
+            return price
+        else:
+            return 'Preço não encontrado.'
     else:
-        return "Preço não encontrado"
-
+        return 'Erro ao obter a página: ' + str(response.status_code)
 
 # Exemplo de uso
-amazon_url = "https://www.amazon.com.br/dp/B0C2RXH9BJ"
-price = get_amazon_price(amazon_url)
-print("Preço do produto na Amazon:", price)
+url = "https://produto.mercadolivre.com.br/MLB-3540274439"
+price = get_price_from_mercado_livre(url)
+print('O preço do produto é:', price)
